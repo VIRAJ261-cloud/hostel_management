@@ -1,0 +1,225 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walchand Hostel Portal</title>
+<style>
+body { font-family: Arial, sans-serif; background:#f1f5f9;
+       color:#172033; margin:0; }
+header { background:#12345a; color:white; padding:22px; }
+main { max-width:850px; margin:22px auto; padding:0 15px; }
+section { background:white; padding:18px; margin:15px 0;
+          border-radius:10px; }
+input, select, textarea, button {
+  box-sizing:border-box; width:100%; padding:10px; margin:6px 0;
+}
+button { background:#12345a; color:white; border:0;
+         border-radius:5px; cursor:pointer; }
+.item { padding:10px; border-bottom:1px solid #ddd; }
+#message { white-space:pre-wrap; font-weight:bold; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Walchand Hostel Portal</h1>
+  <p>Room booking • Student services • Complaints</p>
+</header>
+<main>
+  <section>
+    <h2>Available Rooms</h2>
+    <button onclick="loadRooms()">Refresh rooms</button>
+    <div id="rooms">Loading rooms...</div>
+  </section>
+
+  <section>
+    <h2>Student Registration</h2>
+    <form id="studentForm">
+      <input name="full_name" placeholder="Full name" required>
+      <input name="roll_number" placeholder="College roll number" required>
+      <input name="email" type="email" placeholder="Email" required>
+      <input name="phone" placeholder="Phone number">
+      <button>Register student</button>
+    </form>
+    <p>Save your returned student ID for booking and complaints.</p>
+  </section>
+
+  <section>
+    <h2>Book a Room</h2>
+    <form id="bookingForm">
+      <input name="student_id" type="number"
+             placeholder="Student ID" min="1" required>
+      <select name="room_id" id="roomSelect" required>
+        <option value="">Select a room</option>
+      </select>
+      <button>Request booking</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Submit a Complaint</h2>
+    <form id="complaintForm">
+      <input name="student_id" type="number"
+             placeholder="Student ID" min="1" required>
+      <select name="category" required>
+        <option value="">Choose category</option>
+        <option>Water</option>
+        <option>Electricity</option>
+        <option>Cleaning</option>
+        <option>Food</option>
+        <option>Room maintenance</option>
+        <option>Other</option>
+      </select>
+      <textarea name="description"
+                placeholder="Describe the problem" required></textarea>
+      <button>Submit complaint</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Management Dashboard</h2>
+    <button onclick="loadBookings()">View bookings</button>
+    <div id="bookings"></div>
+    <button onclick="loadComplaints()">View complaints</button>
+    <div id="complaints"></div>
+  </section>
+
+  <p id="message"></p>
+</main>
+<script>
+const API = "http://127.0.0.1:8000";
+
+async function request(path, options = {}) {
+  const res = await fetch(API + path, {
+    ...options,
+    headers: {"Content-Type":"application/json", ...(options.headers || {})}
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Request failed");
+  return data;
+}
+
+function showMessage(text) {
+  document.getElementById("message").textContent = text;
+}
+
+function formData(form) {
+  return Object.fromEntries(new FormData(form).entries());
+}
+
+async function loadRooms() {
+  try {
+    const rooms = await request("/rooms");
+    document.getElementById("rooms").innerHTML = rooms.map(r =>
+      `<div class="item">Room ${r.room_number} — ${r.hostel_name}
+       | Capacity: ${r.capacity} | Available: ${r.available}
+       | ₹${r.monthly_fee}/month</div>`
+    ).join("");
+
+    document.getElementById("roomSelect").innerHTML =
+      '<option value="">Select a room</option>' +
+      rooms.filter(r => r.available > 0).map(r =>
+        `<option value="${r.room_id}">Room ${r.room_number}
+         (${r.available} available)</option>`
+      ).join("");
+  } catch (e) { showMessage(e.message); }
+}
+
+document.getElementById("studentForm").onsubmit = async e => {
+  e.preventDefault();
+  try {
+    const data = await request("/students", {
+      method:"POST", body:JSON.stringify(formData(e.target))
+    });
+    showMessage(`Registered! Your student ID is ${data.student_id}`);
+    e.target.reset();
+  } catch (err) { showMessage(err.message); }
+};
+
+document.getElementById("bookingForm").onsubmit = async e => {
+  e.preventDefault();
+  try {
+    const d = formData(e.target);
+    const data = await request("/bookings", {
+      method:"POST",
+      body:JSON.stringify({student_id:+d.student_id, room_id:+d.room_id})
+    });
+    showMessage(`Booking #${data.booking_id}: ${data.status}`);
+    e.target.reset();
+    loadRooms();
+  } catch (err) { showMessage(err.message); }
+};
+
+document.getElementById("complaintForm").onsubmit = async e => {
+  e.preventDefault();
+  try {
+    const d = formData(e.target);
+    d.student_id = +d.student_id;
+    const data = await request("/complaints", {
+      method:"POST", body:JSON.stringify(d)
+    });
+    showMessage(`Complaint #${data.complaint_id} submitted`);
+    e.target.reset();
+  } catch (err) { showMessage(err.message); }
+};
+
+async function loadBookings() {
+  try {
+    const rows = await request("/bookings");
+    document.getElementById("bookings").innerHTML = rows.map(b =>
+      `<div class="item">#${b.booking_id} — ${b.full_name}
+       — Room ${b.room_number} — ${b.status}
+       ${b.status === "pending" ?
+       `<button onclick="bookingStatus(${b.booking_id},'approved')">Approve</button>
+        <button onclick="bookingStatus(${b.booking_id},'cancelled')">Cancel</button>` : ""}
+       </div>`
+    ).join("") || "No bookings yet.";
+  } catch(e) { showMessage(e.message); }
+}
+
+async function bookingStatus(id, status) {
+  try {
+    await request(`/bookings/${id}`, {
+      method:"PATCH", body:JSON.stringify({status})
+    });
+    showMessage("Booking updated");
+    loadBookings(); loadRooms();
+  } catch(e) { showMessage(e.message); }
+}
+
+async function loadComplaints() {
+  try {
+    const rows = await request("/complaints");
+    document.getElementById("complaints").innerHTML = rows.map(c =>
+      `<div class="item">#${c.complaint_id} — ${c.full_name}
+       — ${c.category}: ${c.description} — ${c.status}
+       <select id="status${c.complaint_id}">
+         <option value="open">Open</option>
+         <option value="in_progress">In progress</option>
+         <option value="resolved">Resolved</option>
+       </select>
+       <button onclick="complaintStatus(${c.complaint_id})">Update</button>
+       </div>`
+    ).join("") || "No complaints yet.";
+    rows.forEach(c => {
+      document.getElementById("status" + c.complaint_id).value = c.status;
+    });
+  } catch(e) { showMessage(e.message); }
+}
+
+async function complaintStatus(id) {
+  try {
+    const status = document.getElementById("status" + id).value;
+    await request(`/complaints/${id}`, {
+      method:"PATCH", body:JSON.stringify({status})
+    });
+    showMessage("Complaint status updated");
+    loadComplaints();
+  } catch(e) { showMessage(e.message); }
+}
+
+loadRooms();
+</script>
+</body>
+</html>
