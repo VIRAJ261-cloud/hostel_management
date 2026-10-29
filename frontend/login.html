@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walchand Hostel Login</title>
+<style>
+body{font-family:Arial;background:#eef2f7;display:grid;place-items:center;
+min-height:100vh;margin:0}
+main{background:white;padding:25px;border-radius:12px;width:min(360px,85%)}
+input,select,button{box-sizing:border-box;width:100%;padding:12px;margin:7px 0}
+button{background:#12345a;color:white;border:0;border-radius:5px;cursor:pointer}
+h2{color:#12345a}
+#msg{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<main>
+<h2>Walchand Hostel</h2>
+<p>Login or create an account</p>
+<form id="form">
+<select id="action">
+<option value="login">Login</option>
+<option value="register">Register</option>
+</select>
+<select id="role">
+<option value="student">Student</option>
+<option value="admin">Admin</option>
+</select>
+<div id="nameBox" hidden>
+<input id="name" placeholder="Full name">
+</div>
+<input id="email" type="email" placeholder="Email" required>
+<input id="password" type="password" placeholder="Password (minimum 8 characters)"
+minlength="8" required>
+<div id="studentBox" hidden>
+<input id="roll" placeholder="College roll number">
+<input id="phone" placeholder="Phone (optional)">
+</div>
+<div id="codeBox" hidden>
+<input id="code" type="password" placeholder="Secret admin code">
+</div>
+<button type="submit">Continue</button>
+</form>
+<p id="msg"></p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+function updateForm(){
+  const reg = $("action").value === "register";
+  const admin = $("role").value === "admin";
+  $("nameBox").hidden = !reg;
+  $("name").required = reg;
+  $("studentBox").hidden = !(reg && !admin);
+  $("roll").required = reg && !admin;
+  $("codeBox").hidden = !(reg && admin);
+  $("code").required = reg && admin;
+}
+$("action").onchange = updateForm;
+$("role").onchange = updateForm;
+updateForm();
+
+$("form").onsubmit = async e => {
+  e.preventDefault();
+  $("msg").textContent = "Please wait...";
+  const action = $("action").value;
+  const role = $("role").value;
+  const body = {
+    email: $("email").value.trim(),
+    password: $("password").value
+  };
+
+  if(action === "register"){
+    body.name = $("name").value.trim();
+    body.role = role;
+    if(role === "admin") body.admin_code = $("code").value;
+    else {
+      body.roll_number = $("roll").value.trim();
+      body.phone = $("phone").value.trim();
+    }
+  }
+
+  try{
+    const response = await fetch(
+      "http://127.0.0.1:8000/auth/" + action,
+      {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(body)
+      }
+    );
+    const data = await response.json();
+    if(!response.ok) throw Error(data.detail || "Request failed");
+
+    if(action === "register"){
+      $("msg").textContent = "Registration successful. Now log in.";
+      $("action").value = "login";
+      $("password").value = "";
+      updateForm();
+    }else{
+      if(data.role !== role) throw Error("Please select your correct account role.");
+      sessionStorage.setItem("hostel_token", data.access_token);
+      sessionStorage.setItem("hostel_role", data.role);
+      sessionStorage.setItem("hostel_name", data.name);
+      if (data.role === "admin") {
+        location.href = "admin.html";
+      } else {
+        location.href = "index.html";
+        }
+    }
+  }catch(err){
+    $("msg").textContent = err.message;
+  }
+};
+</script>
+</body>
+</html>

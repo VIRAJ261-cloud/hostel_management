@@ -1,225 +1,79 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Walchand Hostel Portal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Walchand Hostel | Student Dashboard</title>
 <style>
-body { font-family: Arial, sans-serif; background:#f1f5f9;
-       color:#172033; margin:0; }
-header { background:#12345a; color:white; padding:22px; }
-main { max-width:850px; margin:22px auto; padding:0 15px; }
-section { background:white; padding:18px; margin:15px 0;
-          border-radius:10px; }
-input, select, textarea, button {
-  box-sizing:border-box; width:100%; padding:10px; margin:6px 0;
-}
-button { background:#12345a; color:white; border:0;
-         border-radius:5px; cursor:pointer; }
-.item { padding:10px; border-bottom:1px solid #ddd; }
-#message { white-space:pre-wrap; font-weight:bold; }
+:root{--navy:#14213d;--blue:#2563eb;--bg:#f4f7fb;--text:#172033;--muted:#667085;--line:#e5eaf2;--white:#fff;--green:#16803c;--amber:#a16207;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+header{background:var(--navy);color:white;padding:18px 5%;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:19px}.sub{color:#d5deef;font-size:13px;margin-top:4px}
+button{border:0;border-radius:9px;padding:11px 15px;font-weight:700;cursor:pointer}.logout{background:#fff;color:var(--navy)}
+main{max-width:1100px;margin:28px auto;padding:0 18px}.welcome{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+h1{font-size:26px;margin:0 0 6px}.muted{color:var(--muted);font-size:14px}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0 24px}
+.card,.panel{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 4px 14px #14213d08}.metric{font-size:27px;font-weight:800;margin-top:8px}
+.panel{margin-bottom:20px}.panel h2{font-size:18px;margin:0 0 16px}.room-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:13px}
+.room{border:1px solid var(--line);border-radius:12px;padding:16px}.room h3{margin:0 0 8px}.room p{margin:7px 0;color:var(--muted);font-size:14px}.primary{background:var(--blue);color:white}.primary:disabled{opacity:.45;cursor:not-allowed}
+.notice{padding:12px 14px;border-radius:9px;background:#eff6ff;color:#1d4ed8;margin-bottom:14px;font-size:14px}.error{background:#fef3f2;color:var(--red)}.success{background:#ecfdf3;color:var(--green)}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);font-size:14px}th{color:var(--muted);font-weight:700}.table-wrap{overflow-x:auto}.status{font-weight:700;text-transform:capitalize}.empty{padding:18px;color:var(--muted);text-align:center}
+@media(max-width:650px){.cards{grid-template-columns:1fr}h1{font-size:22px}th,td{padding:10px 8px}}
 </style>
 </head>
 <body>
-<header>
-  <h1>Walchand Hostel Portal</h1>
-  <p>Room booking • Student services • Complaints</p>
-</header>
+<header><div><div class="brand">Walchand Hostel Management</div><div class="sub">Student portal · Book rooms and track requests</div></div><button class="logout" id="logoutBtn">Log out</button></header>
 <main>
-  <section>
-    <h2>Available Rooms</h2>
-    <button onclick="loadRooms()">Refresh rooms</button>
-    <div id="rooms">Loading rooms...</div>
-  </section>
-
-  <section>
-    <h2>Student Registration</h2>
-    <form id="studentForm">
-      <input name="full_name" placeholder="Full name" required>
-      <input name="roll_number" placeholder="College roll number" required>
-      <input name="email" type="email" placeholder="Email" required>
-      <input name="phone" placeholder="Phone number">
-      <button>Register student</button>
-    </form>
-    <p>Save your returned student ID for booking and complaints.</p>
-  </section>
-
-  <section>
-    <h2>Book a Room</h2>
-    <form id="bookingForm">
-      <input name="student_id" type="number"
-             placeholder="Student ID" min="1" required>
-      <select name="room_id" id="roomSelect" required>
-        <option value="">Select a room</option>
-      </select>
-      <button>Request booking</button>
-    </form>
-  </section>
-
-  <section>
-    <h2>Submit a Complaint</h2>
-    <form id="complaintForm">
-      <input name="student_id" type="number"
-             placeholder="Student ID" min="1" required>
-      <select name="category" required>
-        <option value="">Choose category</option>
-        <option>Water</option>
-        <option>Electricity</option>
-        <option>Cleaning</option>
-        <option>Food</option>
-        <option>Room maintenance</option>
-        <option>Other</option>
-      </select>
-      <textarea name="description"
-                placeholder="Describe the problem" required></textarea>
-      <button>Submit complaint</button>
-    </form>
-  </section>
-
-  <section>
-    <h2>Management Dashboard</h2>
-    <button onclick="loadBookings()">View bookings</button>
-    <div id="bookings"></div>
-    <button onclick="loadComplaints()">View complaints</button>
-    <div id="complaints"></div>
-  </section>
-
-  <p id="message"></p>
+<div class="welcome"><div><h1 id="welcomeTitle">Student Dashboard</h1><div class="muted" id="studentMeta">Loading your account…</div></div></div>
+<div id="message" class="notice" hidden></div>
+<section class="cards">
+<div class="card"><div class="muted">Available rooms</div><div class="metric" id="availableMetric">—</div></div>
+<div class="card"><div class="muted">My booking requests</div><div class="metric" id="bookingMetric">—</div></div>
+<div class="card"><div class="muted">Pending requests</div><div class="metric" id="pendingMetric">—</div></div>
+</section>
+<section class="panel"><h2>Available rooms</h2><div class="muted" style="margin:-7px 0 16px">Choose a room to send a booking request. Your student ID is taken securely from your login.</div><div id="rooms" class="room-grid"><div class="empty">Loading rooms…</div></div></section>
+<section class="panel"><h2>My bookings</h2><div class="table-wrap"><table><thead><tr><th>Booking ID</th><th>Room</th><th>Date</th><th>Status</th></tr></thead><tbody id="myBookings"><tr><td colspan="4" class="empty">Loading bookings…</td></tr></tbody></table></div></section>
 </main>
 <script>
-const API = "http://127.0.0.1:8000";
-
-async function request(path, options = {}) {
-  const res = await fetch(API + path, {
-    ...options,
-    headers: {"Content-Type":"application/json", ...(options.headers || {})}
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || "Request failed");
+const API_BASE = "http://127.0.0.1:8000";
+const token = sessionStorage.getItem("hostel_token");
+const role = sessionStorage.getItem("hostel_role");
+if (!token) location.replace("login.html");
+if (role && role !== "student") location.replace("admin.html");
+const headers = {"Authorization": "Bearer " + token, "Content-Type":"application/json"};
+const messageEl = document.getElementById("message");
+function showMessage(text, bad=false){messageEl.textContent=text;messageEl.hidden=false;messageEl.className=bad?"notice error":"notice success";}
+async function api(path, options={}) {
+  const res = await fetch(API_BASE + path, {...options, headers:{...headers,...(options.headers||{})}});
+  let data={}; try{data=await res.json()}catch{}
+  if(!res.ok) throw new Error(data.detail || `Request failed (${res.status})`);
   return data;
 }
-
-function showMessage(text) {
-  document.getElementById("message").textContent = text;
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function statusClass(s){return "status";}
+async function load(){
+  try{
+    const me = await api("/auth/me");
+    if(me.role!=="student"){location.replace("admin.html");return;}
+    document.getElementById("welcomeTitle").textContent="Welcome, "+me.name;
+    document.getElementById("studentMeta").textContent=me.email+" · Student account";
+    // Student ID is intentionally not entered or edited in the browser.
+    const [rooms, bookings] = await Promise.all([api("/rooms"), api("/my/bookings")]);
+    document.getElementById("availableMetric").textContent=rooms.filter(r=>Number(r.available)>0).length;
+    document.getElementById("bookingMetric").textContent=bookings.length;
+    document.getElementById("pendingMetric").textContent=bookings.filter(b=>b.status==="pending").length;
+    const roomsEl=document.getElementById("rooms");
+    roomsEl.innerHTML=rooms.length?rooms.map(r=>`<article class="room"><h3>${esc(r.hostel_name)} · Room ${esc(r.room_number)}</h3><p>Monthly fee: ₹${esc(r.monthly_fee)}</p><p>Capacity: ${esc(r.capacity)} · Available: ${esc(r.available)}</p><button class="primary" ${Number(r.available)<=0?"disabled":""} onclick="bookRoom(${Number(r.room_id)})">${Number(r.available)<=0?"Full":"Request booking"}</button></article>`).join(""):'<div class="empty">No rooms are listed yet.</div>';
+    const tbody=document.getElementById("myBookings");
+    tbody.innerHTML=bookings.length?bookings.map(b=>`<tr><td>#${esc(b.booking_id)}</td><td>${esc(b.hostel_name||"Hostel")} · ${esc(b.room_number)}</td><td>${esc(b.booking_date||"—")}</td><td class="${statusClass(b.status)}">${esc(b.status)}</td></tr>`).join(""):'<tr><td colspan="4" class="empty">You have not requested a room yet.</td></tr>';
+  }catch(e){showMessage(e.message+" — check that the backend is running and the student account is registered.",true);}
 }
-
-function formData(form) {
-  return Object.fromEntries(new FormData(form).entries());
+async function bookRoom(roomId){
+  if(!confirm("Submit a booking request for this room?"))return;
+  try{const result=await api("/bookings",{method:"POST",body:JSON.stringify({room_id:roomId})});showMessage(result.message||"Booking request submitted.");await load();}
+  catch(e){showMessage(e.message,true);}
 }
-
-async function loadRooms() {
-  try {
-    const rooms = await request("/rooms");
-    document.getElementById("rooms").innerHTML = rooms.map(r =>
-      `<div class="item">Room ${r.room_number} — ${r.hostel_name}
-       | Capacity: ${r.capacity} | Available: ${r.available}
-       | ₹${r.monthly_fee}/month</div>`
-    ).join("");
-
-    document.getElementById("roomSelect").innerHTML =
-      '<option value="">Select a room</option>' +
-      rooms.filter(r => r.available > 0).map(r =>
-        `<option value="${r.room_id}">Room ${r.room_number}
-         (${r.available} available)</option>`
-      ).join("");
-  } catch (e) { showMessage(e.message); }
-}
-
-document.getElementById("studentForm").onsubmit = async e => {
-  e.preventDefault();
-  try {
-    const data = await request("/students", {
-      method:"POST", body:JSON.stringify(formData(e.target))
-    });
-    showMessage(`Registered! Your student ID is ${data.student_id}`);
-    e.target.reset();
-  } catch (err) { showMessage(err.message); }
-};
-
-document.getElementById("bookingForm").onsubmit = async e => {
-  e.preventDefault();
-  try {
-    const d = formData(e.target);
-    const data = await request("/bookings", {
-      method:"POST",
-      body:JSON.stringify({student_id:+d.student_id, room_id:+d.room_id})
-    });
-    showMessage(`Booking #${data.booking_id}: ${data.status}`);
-    e.target.reset();
-    loadRooms();
-  } catch (err) { showMessage(err.message); }
-};
-
-document.getElementById("complaintForm").onsubmit = async e => {
-  e.preventDefault();
-  try {
-    const d = formData(e.target);
-    d.student_id = +d.student_id;
-    const data = await request("/complaints", {
-      method:"POST", body:JSON.stringify(d)
-    });
-    showMessage(`Complaint #${data.complaint_id} submitted`);
-    e.target.reset();
-  } catch (err) { showMessage(err.message); }
-};
-
-async function loadBookings() {
-  try {
-    const rows = await request("/bookings");
-    document.getElementById("bookings").innerHTML = rows.map(b =>
-      `<div class="item">#${b.booking_id} — ${b.full_name}
-       — Room ${b.room_number} — ${b.status}
-       ${b.status === "pending" ?
-       `<button onclick="bookingStatus(${b.booking_id},'approved')">Approve</button>
-        <button onclick="bookingStatus(${b.booking_id},'cancelled')">Cancel</button>` : ""}
-       </div>`
-    ).join("") || "No bookings yet.";
-  } catch(e) { showMessage(e.message); }
-}
-
-async function bookingStatus(id, status) {
-  try {
-    await request(`/bookings/${id}`, {
-      method:"PATCH", body:JSON.stringify({status})
-    });
-    showMessage("Booking updated");
-    loadBookings(); loadRooms();
-  } catch(e) { showMessage(e.message); }
-}
-
-async function loadComplaints() {
-  try {
-    const rows = await request("/complaints");
-    document.getElementById("complaints").innerHTML = rows.map(c =>
-      `<div class="item">#${c.complaint_id} — ${c.full_name}
-       — ${c.category}: ${c.description} — ${c.status}
-       <select id="status${c.complaint_id}">
-         <option value="open">Open</option>
-         <option value="in_progress">In progress</option>
-         <option value="resolved">Resolved</option>
-       </select>
-       <button onclick="complaintStatus(${c.complaint_id})">Update</button>
-       </div>`
-    ).join("") || "No complaints yet.";
-    rows.forEach(c => {
-      document.getElementById("status" + c.complaint_id).value = c.status;
-    });
-  } catch(e) { showMessage(e.message); }
-}
-
-async function complaintStatus(id) {
-  try {
-    const status = document.getElementById("status" + id).value;
-    await request(`/complaints/${id}`, {
-      method:"PATCH", body:JSON.stringify({status})
-    });
-    showMessage("Complaint status updated");
-    loadComplaints();
-  } catch(e) { showMessage(e.message); }
-}
-
-loadRooms();
+document.getElementById("logoutBtn").addEventListener("click",()=>{sessionStorage.removeItem("hostel_token");sessionStorage.removeItem("hostel_role");sessionStorage.removeItem("hostel_name");location.replace("login.html");});
+load();
 </script>
 </body>
 </html>

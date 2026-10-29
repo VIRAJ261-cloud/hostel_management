@@ -1,0 +1,395 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walchand Hostel - Admin Dashboard</title>
+<style>
+:root{--navy:#172b45;--blue:#2563eb;--bg:#f3f6fa;--ink:#1b293b;--muted:#69788b;--line:#e2e8f0;--green:#17663d;--red:#a52c21}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Arial,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+aside{background:var(--navy);color:white;padding:24px 15px;display:flex;flex-direction:column;gap:24px}
+.brand{font-size:19px;font-weight:bold;padding:0 8px}
+.brand small{display:block;font-size:12px;color:#cbd5e1;font-weight:normal}
+nav{display:grid;gap:6px}
+nav button{border:0;background:transparent;color:#e2e8f0;text-align:left;padding:12px;border-radius:8px}
+nav button.active,nav button:hover{background:#304761;color:white}
+.logout{margin-top:auto;border:1px solid #65758b;color:white;background:transparent;padding:10px;border-radius:8px}
+main{padding:28px;min-width:0}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+h1{font-size:27px;margin:0}
+h2{font-size:18px;margin:0 0 12px}
+p{margin:5px 0}
+.muted,.hint{color:var(--muted);font-size:13px}
+.btn{border:1px solid var(--line);background:white;border-radius:8px;padding:9px 12px;font-weight:bold;color:var(--ink)}
+.btn.primary{background:var(--navy);color:white;border-color:var(--navy)}
+.btn.approve{color:var(--green)}
+.btn.cancel{color:var(--red)}
+.notice{display:none;padding:12px 14px;border-radius:8px;margin-bottom:16px;overflow-wrap:anywhere}
+.notice.show{display:block}
+.notice.error{background:#fff0ee;color:#8c271e}
+.notice.ok{background:#eaf8ef;color:#17633b}
+.notice.info{background:#eaf1fc;color:#244f8b}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.card,.panel{background:white;border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+.card span{font-size:13px;color:var(--muted)}
+.card strong{display:block;font-size:28px;margin-top:6px}
+.section{display:none}
+.section.active{display:block}
+.formgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end}
+.field label{display:block;font-size:13px;font-weight:bold;margin-bottom:5px}
+.field input,.field select,.search{width:100%;border:1px solid #d6deea;border-radius:8px;padding:10px;background:white;min-width:0}
+.field button{width:100%}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.search{max-width:360px}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:9px}
+table{width:100%;border-collapse:collapse;min-width:620px;font-size:13px}
+th,td{padding:11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#f7f9fc;color:var(--muted);font-size:11px;text-transform:uppercase}
+tr:last-child td{border-bottom:0}
+.pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#edf1f6;font-size:11px;font-weight:bold}
+.pill.pending,.pill.open{background:#fff2d5;color:#805800}
+.pill.approved,.pill.resolved{background:#e3f6e9;color:#17633b}
+.pill.cancelled{background:#ffebe8;color:#982b20}
+.empty{text-align:center;color:var(--muted);padding:22px}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+@media(max-width:900px){.layout{grid-template-columns:1fr}aside{padding:14px;gap:12px}nav{grid-template-columns:repeat(3,minmax(0,1fr))}nav button{text-align:center;padding:9px 4px;font-size:12px}.logout{margin-top:0}main{padding:18px 12px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.formgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.formgrid{grid-template-columns:1fr}.cards{gap:8px}.card{padding:12px}.card strong{font-size:23px}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+  <div class="brand">Walchand Hostel<small>Admin Dashboard</small></div>
+  <nav id="nav">
+    <button class="active" data-section="overview">Overview</button>
+    <button data-section="rooms">Rooms</button>
+    <button data-section="students">Students</button>
+    <button data-section="bookings">Bookings</button>
+    <button data-section="complaints">Complaints</button>
+  </nav>
+  <div id="adminName">Administrator</div>
+  <button class="logout" id="logout">Log out</button>
+</aside>
+
+<main>
+<header>
+  <div><h1 id="pageTitle">Overview</h1><p class="muted" id="pageSubtitle">Manage hostel activity in one place.</p></div>
+  <button class="btn" id="refresh">Refresh data</button>
+</header>
+<div id="notice" class="notice" role="status"></div>
+
+<section id="section-overview" class="section active">
+  <div class="cards">
+    <div class="card"><span>Total rooms</span><strong id="roomCount">—</strong></div>
+    <div class="card"><span>Students</span><strong id="studentCount">—</strong></div>
+    <div class="card"><span>Bookings</span><strong id="bookingCount">—</strong></div>
+    <div class="card"><span>Complaints</span><strong id="complaintCount">—</strong></div>
+  </div>
+  <div class="panel">
+    <h2>Pending booking requests</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>ID</th><th>Student</th><th>Room</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="recentBookings"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="section-rooms" class="section">
+  <div class="panel">
+    <h2>Add a room</h2>
+    <p class="hint">Select an existing hostel and enter the new room details.</p>
+    <form id="addRoomForm">
+      <div class="formgrid">
+        <div class="field"><label for="roomHostel">Hostel</label><select id="roomHostel" required><option value="">Loading hostels...</option></select></div>
+        <div class="field"><label for="newRoomNumber">Room number</label><input id="newRoomNumber" placeholder="e.g. 101" required></div>
+        <div class="field"><label for="newRoomCapacity">Capacity</label><input id="newRoomCapacity" type="number" min="1" step="1" placeholder="e.g. 3" required></div>
+        <div class="field"><label for="newRoomFee">Monthly fee (₹)</label><input id="newRoomFee" type="number" min="0" step="0.01" placeholder="e.g. 5000" required></div>
+      </div>
+      <p style="margin-top:12px"><button class="btn primary" type="submit" id="addRoomBtn">Add room</button></p>
+    </form>
+  </div>
+  <div class="panel">
+    <h2>Room inventory</h2>
+    <input class="search" id="roomSearch" placeholder="Search rooms or hostels">
+    <div class="tablewrap" style="margin-top:12px"><table>
+      <thead><tr><th>Room ID</th><th>Hostel</th><th>Room number</th><th>Capacity</th><th>Monthly fee</th><th>Available</th></tr></thead>
+      <tbody id="roomsTable"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="section-students" class="section">
+  <div class="panel">
+    <h2>Registered students</h2>
+    <p class="hint">Student details from the database.</p>
+    <input class="search" id="studentSearch" placeholder="Search name, roll number, email or phone">
+    <div class="tablewrap" style="margin-top:12px"><table>
+      <thead><tr><th>Student ID</th><th>Full name</th><th>Roll number</th><th>Email</th><th>Phone</th></tr></thead>
+      <tbody id="studentsTable"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="section-bookings" class="section">
+  <div class="panel">
+    <h2>Manage bookings</h2>
+    <div class="toolbar">
+      <input class="search" id="bookingSearch" placeholder="Search booking, student or room">
+      <select id="bookingFilter" class="search"><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="cancelled">Cancelled</option></select>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>ID</th><th>Student</th><th>Roll number</th><th>Room</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="bookingsTable"><tr><td colspan="7" class="empty">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="section-complaints" class="section">
+  <div class="panel">
+    <h2>Manage complaints</h2>
+    <input class="search" id="complaintSearch" placeholder="Search student, category or complaint">
+    <div class="tablewrap" style="margin-top:12px"><table>
+      <thead><tr><th>ID</th><th>Student</th><th>Category</th><th>Description</th><th>Created</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="complaintsTable"><tr><td colspan="7" class="empty">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
+</section>
+</main>
+</div>
+
+<script>
+const API_BASE = "http://127.0.0.1:8000";
+const token = sessionStorage.getItem("hostel_token");
+const role = sessionStorage.getItem("hostel_role");
+const $ = id => document.getElementById(id);
+const store = {rooms:[], hostels:[], students:[], bookings:[], complaints:[]};
+
+if (!token) {
+  location.replace("login.html");
+} else if (role !== "admin") {
+  location.replace("index.html");
+}
+
+$("adminName").textContent = sessionStorage.getItem("hostel_name") || "Administrator";
+
+const sectionNames = {
+  overview:["Overview","Manage hostel activity in one place."],
+  rooms:["Rooms","Add rooms and view room inventory."],
+  students:["Students","View registered student records."],
+  bookings:["Bookings","Approve or cancel student booking requests."],
+  complaints:["Complaints","Review complaints and update their status."]
+};
+
+function showNotice(message, type="info") {
+  const n=$("notice");
+  n.textContent=message;
+  n.className="notice show "+type;
+}
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+function arrayOf(value) {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.items)) return value.items;
+  if (Array.isArray(value?.data)) return value.data;
+  return [];
+}
+async function api(path, options={}) {
+  let response;
+  try {
+    response = await fetch(API_BASE+path, {
+      ...options,
+      headers:{
+        "Authorization":"Bearer "+token,
+        ...(options.body ? {"Content-Type":"application/json"} : {}),
+        ...(options.headers || {})
+      }
+    });
+  } catch {
+    throw new Error("Cannot connect to FastAPI. Make sure the backend is running.");
+  }
+  const raw=await response.text();
+  let data={};
+  try { data=raw ? JSON.parse(raw) : {}; } catch { data={detail:raw}; }
+  if (!response.ok) throw new Error(data.detail || `HTTP ${response.status} on ${path}`);
+  return data;
+}
+function setTable(id, columns, rows, render, empty="No records found.") {
+  $(id).innerHTML = rows.length
+    ? rows.map(render).join("")
+    : `<tr><td colspan="${columns}" class="empty">${esc(empty)}</td></tr>`;
+}
+function pill(status) {
+  const s=String(status || "unknown").toLowerCase();
+  return `<span class="pill ${esc(s)}">${esc(s.replaceAll("_"," "))}</span>`;
+}
+
+function renderRooms() {
+  const q=$("roomSearch").value.toLowerCase();
+  const rows=store.rooms.filter(r=>JSON.stringify(r).toLowerCase().includes(q));
+  setTable("roomsTable",6,rows,r=>`<tr>
+    <td>${esc(r.room_id)}</td><td>${esc(r.hostel_name)}</td>
+    <td>${esc(r.room_number)}</td><td>${esc(r.capacity)}</td>
+    <td>₹${esc(r.monthly_fee)}</td><td>${esc(r.available)}</td></tr>`);
+  $("roomCount").textContent=store.rooms.length;
+}
+function renderStudents() {
+  const q=$("studentSearch").value.toLowerCase();
+  const rows=store.students.filter(s=>JSON.stringify(s).toLowerCase().includes(q));
+  setTable("studentsTable",5,rows,s=>`<tr>
+    <td>${esc(s.student_id)}</td><td>${esc(s.full_name)}</td>
+    <td>${esc(s.roll_number)}</td><td>${esc(s.email)}</td>
+    <td>${esc(s.phone)}</td></tr>`);
+  $("studentCount").textContent=store.students.length;
+}
+function bookingRow(b) {
+  const status=String(b.status || "").toLowerCase();
+  const actions=status==="pending"
+    ? `<div class="actions"><button class="btn approve" data-booking-status="approved" data-id="${esc(b.booking_id)}">Approve</button><button class="btn cancel" data-booking-status="cancelled" data-id="${esc(b.booking_id)}">Cancel</button></div>`
+    : "—";
+  return `<tr><td>${esc(b.booking_id)}</td><td>${esc(b.full_name)}</td>
+    <td>${esc(b.roll_number)}</td><td>${esc(b.room_number)}</td>
+    <td>${esc(b.booking_date)}</td><td>${pill(status)}</td><td>${actions}</td></tr>`;
+}
+function renderBookings() {
+  const q=$("bookingSearch").value.toLowerCase();
+  const filter=$("bookingFilter").value;
+  const rows=store.bookings.filter(b=>
+    JSON.stringify(b).toLowerCase().includes(q) &&
+    (!filter || String(b.status).toLowerCase()===filter));
+  setTable("bookingsTable",7,rows,bookingRow);
+  const pending=store.bookings.filter(b=>String(b.status).toLowerCase()==="pending");
+  $("bookingCount").textContent=store.bookings.length;
+  setTable("recentBookings",5,pending.slice(0,5),bookingRow,"No pending bookings.");
+}
+function renderComplaints() {
+  const q=$("complaintSearch").value.toLowerCase();
+  const rows=store.complaints.filter(c=>JSON.stringify(c).toLowerCase().includes(q));
+  setTable("complaintsTable",7,rows,c=>{
+    const status=String(c.status || "open").toLowerCase();
+    const options=["open","in_progress","resolved"].map(s=>
+      `<option value="${s}" ${s===status?"selected":""}>${s.replaceAll("_"," ")}</option>`).join("");
+    return `<tr><td>${esc(c.complaint_id)}</td><td>${esc(c.full_name)}</td>
+      <td>${esc(c.category)}</td><td>${esc(c.description)}</td>
+      <td>${esc(c.created_at)}</td><td>${pill(status)}</td>
+      <td><div class="actions"><select data-complaint-select="${esc(c.complaint_id)}">${options}</select>
+      <button class="btn" data-save-complaint="${esc(c.complaint_id)}">Save</button></div></td></tr>`;
+  });
+  $("complaintCount").textContent=store.complaints.length;
+}
+async function loadAll() {
+  $("refresh").disabled=true;
+  $("refresh").textContent="Loading...";
+  const errors=[];
+  for (const [key,path] of [
+    ["rooms","/rooms"],["hostels","/hostels"],["students","/students"],
+    ["bookings","/bookings"],["complaints","/complaints"]
+  ]) {
+    try { store[key]=arrayOf(await api(path)); }
+    catch(e) { store[key]=[]; errors.push(path+": "+e.message); }
+  }
+  renderRooms();
+  renderStudents();
+  renderBookings();
+  renderComplaints();
+
+  const hostelSelect=$("roomHostel");
+  const previous=hostelSelect.value;
+  hostelSelect.innerHTML='<option value="">Select hostel</option>'+
+    store.hostels.map(h=>`<option value="${esc(h.hostel_id)}">${esc(h.hostel_name)} (ID ${esc(h.hostel_id)})</option>`).join("");
+  if (store.hostels.some(h=>String(h.hostel_id)===previous)) hostelSelect.value=previous;
+  if (!store.hostels.length) hostelSelect.innerHTML='<option value="">No hostels found</option>';
+
+  $("refresh").disabled=false;
+  $("refresh").textContent="Refresh data";
+  if (errors.length) showNotice("Some data could not load: "+errors.join(" | "), "error");
+  else showNotice("All dashboard data refreshed.", "ok");
+}
+async function addRoom(event) {
+  event.preventDefault();
+  const payload={
+    hostel_id:Number($("roomHostel").value),
+    room_number:$("newRoomNumber").value.trim(),
+    capacity:Number($("newRoomCapacity").value),
+    monthly_fee:Number($("newRoomFee").value)
+  };
+  if (!payload.hostel_id) return showNotice("Please select a hostel.", "error");
+  if (!payload.room_number || payload.capacity<1 || payload.monthly_fee<0 ||
+      !Number.isFinite(payload.monthly_fee)) {
+    return showNotice("Enter a valid room number, capacity and monthly fee.", "error");
+  }
+  $("addRoomBtn").disabled=true;
+  try {
+    await api("/rooms",{method:"POST",body:JSON.stringify(payload)});
+    $("addRoomForm").reset();
+    showNotice("Room added successfully.", "ok");
+    await loadAll();
+  } catch(e) {
+    showNotice("Could not add room: "+e.message,"error");
+  } finally {
+    $("addRoomBtn").disabled=false;
+  }
+}
+async function updateBooking(id,status) {
+  if (!confirm(`Mark booking #${id} as ${status}?`)) return;
+  try {
+    await api(`/bookings/${encodeURIComponent(id)}`,{
+      method:"PATCH",body:JSON.stringify({status})
+    });
+    showNotice(`Booking #${id} updated.`, "ok");
+    await loadAll();
+  } catch(e) { showNotice("Booking update failed: "+e.message,"error"); }
+}
+async function updateComplaint(id) {
+  const select=document.querySelector(`[data-complaint-select="${CSS.escape(String(id))}"]`);
+  if (!select) return;
+  try {
+    await api(`/complaints/${encodeURIComponent(id)}`,{
+      method:"PATCH",body:JSON.stringify({status:select.value})
+    });
+    showNotice("Complaint status updated.", "ok");
+    await loadAll();
+  } catch(e) { showNotice("Complaint update failed: "+e.message,"error"); }
+}
+function go(section) {
+  document.querySelectorAll(".section").forEach(el=>
+    el.classList.toggle("active",el.id==="section-"+section));
+  document.querySelectorAll("[data-section]").forEach(el=>
+    el.classList.toggle("active",el.dataset.section===section));
+  $("pageTitle").textContent=sectionNames[section][0];
+  $("pageSubtitle").textContent=sectionNames[section][1];
+}
+$("nav").addEventListener("click",e=>{
+  const button=e.target.closest("[data-section]");
+  if (button) go(button.dataset.section);
+});
+document.addEventListener("click",e=>{
+  const booking=e.target.closest("[data-booking-status]");
+  if (booking) updateBooking(booking.dataset.id,booking.dataset.bookingStatus);
+  const complaint=e.target.closest("[data-save-complaint]");
+  if (complaint) updateComplaint(complaint.dataset.saveComplaint);
+});
+$("addRoomForm").addEventListener("submit",addRoom);
+$("refresh").addEventListener("click",loadAll);
+$("roomSearch").addEventListener("input",renderRooms);
+$("studentSearch").addEventListener("input",renderStudents);
+$("bookingSearch").addEventListener("input",renderBookings);
+$("bookingFilter").addEventListener("change",renderBookings);
+$("complaintSearch").addEventListener("input",renderComplaints);
+$("logout").addEventListener("click",()=>{
+  sessionStorage.removeItem("hostel_token");
+  sessionStorage.removeItem("hostel_role");
+  sessionStorage.removeItem("hostel_name");
+  location.replace("login.html");
+});
+if (token && role==="admin") loadAll();
+</script>
+</body>
+</html>
